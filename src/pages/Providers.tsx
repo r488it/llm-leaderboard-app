@@ -1,0 +1,164 @@
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Grid, 
+  Paper, 
+  CircularProgress,
+  Alert,
+  Divider
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ProviderCard from '../components/providers/ProviderCard';
+import ProviderFormDialog from '../components/providers/ProviderFormDialog';
+import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '../hooks/useProviders';
+import { Provider, ProviderFormData } from '../types/provider';
+import { useAppContext } from '../contexts/AppContext';
+
+/**
+ * プロバイダ管理ページ
+ */
+const Providers: React.FC = () => {
+  // コンテキストから状態を取得
+  const { setSelectedProvider, setError } = useAppContext();
+  
+  // ダイアログの状態
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  
+  // 削除確認の状態
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [providerToDelete, setProviderToDelete] = useState<string | null>(null);
+  
+  // プロバイダデータの取得
+  const { 
+    data: providers, 
+    isLoading, 
+    isError, 
+    error 
+  } = useProviders();
+  
+  // ミューテーションフック
+  const createProvider = useCreateProvider();
+  const updateProvider = useUpdateProvider(editingProvider?.id || '');
+  const deleteProvider = useDeleteProvider();
+  
+  // エラーハンドリング
+  if (error) {
+    setError(`プロバイダの取得に失敗しました: ${error.message}`);
+  }
+  
+  // プロバイダの追加/編集ダイアログを開く
+  const handleOpenFormDialog = (provider?: Provider) => {
+    if (provider) {
+      setEditingProvider(provider);
+    } else {
+      setEditingProvider(null);
+    }
+    setFormDialogOpen(true);
+  };
+  
+  // プロバイダの追加/編集ダイアログを閉じる
+  const handleCloseFormDialog = () => {
+    setFormDialogOpen(false);
+    setEditingProvider(null);
+  };
+  
+  // プロバイダの追加/編集を実行
+  const handleSubmitProvider = async (data: ProviderFormData) => {
+    try {
+      if (editingProvider) {
+        await updateProvider.mutateAsync(data);
+      } else {
+        await createProvider.mutateAsync(data);
+      }
+      handleCloseFormDialog();
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(`プロバイダの${editingProvider ? '更新' : '追加'}に失敗しました: ${err.message}`);
+      }
+    }
+  };
+  
+  // プロバイダの削除を実行
+  const handleDeleteProvider = async (id: string) => {
+    try {
+      await deleteProvider.mutateAsync(id);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(`プロバイダの削除に失敗しました: ${err.message}`);
+      }
+    }
+  };
+  
+  // プロバイダを選択
+  const handleSelectProvider = (provider: Provider) => {
+    setSelectedProvider(provider);
+  };
+  
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          LLMプロバイダ管理
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenFormDialog()}
+        >
+          プロバイダを追加
+        </Button>
+      </Box>
+      
+      <Divider sx={{ mb: 3 }} />
+      
+      {isLoading ? (
+        <Box display="flex" justifyContent="center" my={4}>
+          <CircularProgress />
+        </Box>
+      ) : isError ? (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          プロバイダの取得中にエラーが発生しました。
+        </Alert>
+      ) : providers && providers.length > 0 ? (
+        <Grid container spacing={2}>
+          {providers.map((provider) => (
+            <Grid item xs={12} sm={6} md={4} key={provider.id}>
+              <ProviderCard
+                provider={provider}
+                onEdit={handleOpenFormDialog}
+                onDelete={handleDeleteProvider}
+                onSelect={handleSelectProvider}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            プロバイダが登録されていません。「プロバイダを追加」ボタンをクリックして最初のプロバイダを登録してください。
+          </Typography>
+        </Paper>
+      )}
+      
+      {/* プロバイダ追加/編集ダイアログ */}
+      <ProviderFormDialog
+        open={formDialogOpen}
+        onClose={handleCloseFormDialog}
+        onSubmit={handleSubmitProvider}
+        initialData={editingProvider ? {
+          name: editingProvider.name,
+          type: editingProvider.type,
+          endpoint: editingProvider.endpoint,
+          apiKey: editingProvider.apiKey,
+          isActive: editingProvider.isActive
+        } : undefined}
+        isSubmitting={createProvider.isPending || updateProvider.isPending}
+      />
+    </Box>
+  );
+};
+
+export default Providers;
