@@ -86,7 +86,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({ dataset, onEdit, onDelete, on
             }} 
           />
           <Typography variant="body2" color="text.secondary">
-            {dataset.items.length} アイテム
+            {dataset.itemCount !== undefined ? dataset.itemCount : dataset.items.length} アイテム
           </Typography>
         </Box>
         

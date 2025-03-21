@@ -67,11 +67,11 @@ const Layout: React.FC = () => {
         </ListItem>
         <ListItem 
           button 
-          onClick={() => handleNavigation('/evaluations')}
-          selected={isActive('/evaluations')}
+          onClick={() => handleNavigation('/metrics')}
+          selected={isActive('/metrics')}
         >
           <ListItemIcon>
-            <AssessmentIcon color={isActive('/evaluations') ? 'primary' : undefined} />
+            <AssessmentIcon color={isActive('/metrics') ? 'primary' : undefined} />
           </ListItemIcon>
           <ListItemText primary="評価" />
         </ListItem>

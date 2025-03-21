@@ -10,7 +10,16 @@ import { Metric, MetricFormData, LeaderboardEntry, LeaderboardFilterOptions } fr
 export const useMetrics = () => {
   return useQuery<Metric[], Error>({
     queryKey: ['metrics'],
-    queryFn: () => metricsApi.getMetrics(),
+    queryFn: async () => {
+      try {
+        const result = await metricsApi.getMetrics();
+        console.log('Metrics API response:', result);
+        return result;
+      } catch (error) {
+        console.error('Metrics API error:', error);
+        throw error;
+      }
+    },
   });
 };
 
@@ -28,7 +37,17 @@ export const useCreateMetric = () => {
   const queryClient = useQueryClient();
   
   return useMutation<Metric, Error, MetricFormData>({
-    mutationFn: (data) => metricsApi.createMetric(data),
+    mutationFn: async (data) => {
+      console.log('Creating metric with data:', data);
+      try {
+        const result = await metricsApi.createMetric(data);
+        console.log('Create metric result:', result);
+        return result;
+      } catch (error) {
+        console.error('Create metric error:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       // 成功時に評価指標一覧を再取得
       queryClient.invalidateQueries({ queryKey: ['metrics'] });

@@ -10,6 +10,7 @@ export interface Dataset {
   description?: string;
   type: DatasetType;
   items: DatasetItem[];
+  itemCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
