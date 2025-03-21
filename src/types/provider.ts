@@ -11,6 +11,7 @@ export interface Provider {
   endpoint?: string;
   apiKey?: string;
   models: Model[];
+  modelCount?: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

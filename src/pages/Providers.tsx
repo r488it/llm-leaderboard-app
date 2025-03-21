@@ -10,6 +10,7 @@ import {
   Divider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 import ProviderCard from '../components/providers/ProviderCard';
 import ProviderFormDialog from '../components/providers/ProviderFormDialog';
 import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '../hooks/useProviders';
@@ -22,6 +23,7 @@ import { useAppContext } from '../contexts/AppContext';
 const Providers: React.FC = () => {
   // コンテキストから状態を取得
   const { setSelectedProvider, setError } = useAppContext();
+  const navigate = useNavigate();
   
   // ダイアログの状態
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -95,6 +97,8 @@ const Providers: React.FC = () => {
   // プロバイダを選択
   const handleSelectProvider = (provider: Provider) => {
     setSelectedProvider(provider);
+    // プロバイダの詳細ページに遷移
+    navigate(`/providers/${provider.id}`);
   };
   
   return (

@@ -19,7 +19,21 @@ export class ProvidersRepository {
       ORDER BY created_at DESC
     `).all();
 
-    return rows.map(row => this.mapRowToProvider(row));
+    // 各プロバイダにモデル数を含める
+    return rows.map(row => {
+      const provider = this.mapRowToProvider(row);
+      
+      // モデル数を取得
+      const modelCount = this.db.prepare(`
+        SELECT COUNT(*) as count FROM models WHERE provider_id = ?
+      `).get(row.id);
+      
+      // モデル数を含める
+      return {
+        ...provider,
+        modelCount: modelCount ? modelCount.count : 0
+      };
+    });
   }
 
   /**

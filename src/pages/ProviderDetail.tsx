@@ -90,13 +90,17 @@ const ProviderDetail: React.FC = () => {
   // モデルの追加/編集を実行
   const handleSubmitModel = async (data: ModelFormData) => {
     try {
+      console.log('Submitting model data:', data);
       if (editingModel) {
-        await updateModel.mutateAsync(data);
+        const result = await updateModel.mutateAsync(data);
+        console.log('Updated model:', result);
       } else {
-        await createModel.mutateAsync(data);
+        const result = await createModel.mutateAsync(data);
+        console.log('Created model:', result);
       }
       handleCloseFormDialog();
     } catch (err) {
+      console.error('Error submitting model:', err);
       if (err instanceof Error) {
         setError(`モデルの${editingModel ? '更新' : '追加'}に失敗しました: ${err.message}`);
       }
@@ -199,6 +203,8 @@ const ProviderDetail: React.FC = () => {
                   <ModelCard
                     model={model}
                     onSelect={handleSelectModel}
+                    onEdit={handleOpenFormDialog}
+                    onDelete={handleDeleteModel}
                   />
                 </Grid>
               ))}

@@ -37,7 +37,15 @@ export const providersApi = {
 
   // モデルの作成
   createModel: async (providerId: string, data: ModelFormData): Promise<Model> => {
-    return apiClient.post<Model>(`/providers/${providerId}/models`, data);
+    console.log(`Creating model for provider ${providerId}:`, data);
+    try {
+      const result = await apiClient.post<Model>(`/providers/${providerId}/models`, data);
+      console.log('API response:', result);
+      return result;
+    } catch (error) {
+      console.error('API error creating model:', error);
+      throw error;
+    }
   },
 
   // モデルの更新

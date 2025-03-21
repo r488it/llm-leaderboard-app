@@ -174,7 +174,7 @@ const Inferences: React.FC = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleOpenFormDialog}
-          disabled={!datasets?.length || !providers?.length || !models.length}
+          disabled={!datasets?.length || !providers?.length}
         >
           推論を作成
         </Button>

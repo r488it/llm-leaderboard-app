@@ -34,16 +34,20 @@ class ApiClient {
     // レスポンスインターセプター
     this.client.interceptors.response.use(
       (response) => {
+        console.log(`API Response [${response.config.method?.toUpperCase()}] ${response.config.url}:`, response.data);
         return response;
       },
       (error) => {
         // エラーハンドリング
         if (error.response) {
           // サーバーからのレスポンスがある場合
-          console.error('API Error:', error.response.data);
+          console.error(`API Error [${error.config?.method?.toUpperCase()}] ${error.config?.url}:`, error.response.data);
+          console.error('Status:', error.response.status);
+          console.error('Headers:', error.response.headers);
         } else if (error.request) {
           // リクエストは送信されたがレスポンスがない場合
           console.error('API Request Error:', error.request);
+          console.error('No response received. Check if the server is running.');
         } else {
           // リクエスト設定中にエラーが発生した場合
           console.error('API Config Error:', error.message);

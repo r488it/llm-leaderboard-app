@@ -81,7 +81,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, onEdit, onDelete,
         </Box>
         
         <Typography variant="body2" color="text.secondary" mb={1}>
-          モデル数: {provider.models.length}
+          モデル数: {provider.modelCount !== undefined ? provider.modelCount : provider.models?.length || 0}
         </Typography>
         
         {provider.endpoint && (
