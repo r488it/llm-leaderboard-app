@@ -154,8 +154,15 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
       newErrors.endpoint = 'エンドポイントは必須です';
     }
     
-    if (!formData.apiKey.trim()) {
-      newErrors.apiKey = 'APIキーは必須です';
+    // プロバイダによってAPIキーが必須かどうかを判定
+    if (selectedProvider) {
+      const requiresApiKey = selectedProvider.type === 'azure' || 
+                             selectedProvider.type === 'openai' || 
+                             selectedProvider.type === 'huggingface';
+      
+      if (requiresApiKey && !formData.apiKey.trim()) {
+        newErrors.apiKey = 'APIキーは必須です';
+      }
     }
     
     // パラメータのJSONバリデーション
@@ -271,8 +278,16 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
               value={formData.apiKey}
               onChange={handleChange}
               error={!!errors.apiKey}
-              helperText={errors.apiKey || 'モデルのAPIキー'}
-              required
+              helperText={errors.apiKey || (selectedProvider && (
+                selectedProvider.type === 'azure' || 
+                selectedProvider.type === 'openai' || 
+                selectedProvider.type === 'huggingface'
+              ) ? 'モデルのAPIキー（必須）' : 'モデルのAPIキー（オプション）')}
+              required={selectedProvider && (
+                selectedProvider.type === 'azure' || 
+                selectedProvider.type === 'openai' || 
+                selectedProvider.type === 'huggingface'
+              )}
             />
           </Grid>
           

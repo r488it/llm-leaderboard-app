@@ -135,3 +135,27 @@ export const useDeleteModel = () => {
     },
   });
 };
+
+// プロバイダの接続検証用のフック
+export const useValidateProvider = () => {
+  // 実際の実装ではAPIを呼び出すなどの検証が必要ですが、
+  // ここではモックとして常に成功を返します
+  return {
+    validateAzure: async (endpoint: string, apiKey: string): Promise<boolean> => {
+      console.log('Validating Azure provider', { endpoint, apiKey });
+      return true;
+    },
+    validateOpenAI: async (apiKey: string): Promise<boolean> => {
+      console.log('Validating OpenAI provider', { apiKey });
+      return true;
+    },
+    validateOllama: async (endpoint: string): Promise<boolean> => {
+      console.log('Validating Ollama provider', { endpoint });
+      return true;
+    },
+    validateHuggingFace: async (apiKey: string): Promise<boolean> => {
+      console.log('Validating HuggingFace provider', { apiKey });
+      return true;
+    }
+  };
+};

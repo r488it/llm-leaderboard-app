@@ -44,6 +44,8 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'OpenAI',
         type: 'openai',
+        endpoint: 'https://api.openai.com/v1',
+        apiKey: 'sk-sample-key-openai',
         isActive: true
       });
       console.log(`Created OpenAI provider: ${provider.id}`);
@@ -60,6 +62,8 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'Azure OpenAI',
         type: 'azure',
+        endpoint: 'https://example-azure-openai.openai.azure.com',
+        apiKey: 'azure-sample-key',
         isActive: true
       });
       console.log(`Created Azure provider: ${provider.id}`);
@@ -76,6 +80,8 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'Ollama',
         type: 'ollama',
+        endpoint: 'http://localhost:11434/api/generate',
+        apiKey: '',
         isActive: true
       });
       console.log(`Created Ollama provider: ${provider.id}`);

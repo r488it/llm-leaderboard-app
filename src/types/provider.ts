@@ -8,6 +8,8 @@ export interface Provider {
   id: string;
   name: string;
   type: ProviderType;
+  endpoint?: string;
+  apiKey?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +32,8 @@ export interface Model {
 export interface ProviderFormData {
   name: string;
   type: ProviderType;
+  endpoint?: string;
+  apiKey?: string;
   isActive: boolean;
 }
 

@@ -14,7 +14,7 @@ export class ProvidersRepository {
    */
   getProviders(): Provider[] {
     const rows = this.db.prepare(`
-      SELECT id, name, type, is_active, created_at, updated_at
+      SELECT id, name, type, endpoint, api_key, is_active, created_at, updated_at
       FROM providers
       ORDER BY created_at DESC
     `).all();
@@ -27,7 +27,7 @@ export class ProvidersRepository {
    */
   getProvider(id: string): Provider | null {
     const row = this.db.prepare(`
-      SELECT id, name, type, is_active, created_at, updated_at
+      SELECT id, name, type, endpoint, api_key, is_active, created_at, updated_at
       FROM providers
       WHERE id = ?
     `).get(id);
@@ -45,12 +45,14 @@ export class ProvidersRepository {
     const now = new Date().toISOString();
 
     this.db.prepare(`
-      INSERT INTO providers (id, name, type, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO providers (id, name, type, endpoint, api_key, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       data.name,
       data.type,
+      data.endpoint || null,
+      data.apiKey || null,
       data.isActive ? 1 : 0,
       now,
       now
@@ -60,6 +62,8 @@ export class ProvidersRepository {
       id,
       name: data.name,
       type: data.type as ProviderType,
+      endpoint: data.endpoint,
+      apiKey: data.apiKey,
       isActive: data.isActive,
       createdAt: new Date(now),
       updatedAt: new Date(now)
@@ -77,11 +81,13 @@ export class ProvidersRepository {
 
     this.db.prepare(`
       UPDATE providers
-      SET name = ?, type = ?, is_active = ?, updated_at = ?
+      SET name = ?, type = ?, endpoint = ?, api_key = ?, is_active = ?, updated_at = ?
       WHERE id = ?
     `).run(
       data.name,
       data.type,
+      data.endpoint || null,
+      data.apiKey || null,
       data.isActive ? 1 : 0,
       now,
       id
@@ -91,6 +97,8 @@ export class ProvidersRepository {
       ...provider,
       name: data.name,
       type: data.type as ProviderType,
+      endpoint: data.endpoint,
+      apiKey: data.apiKey,
       isActive: data.isActive,
       updatedAt: new Date(now)
     };
@@ -228,6 +236,15 @@ export class ProvidersRepository {
   }
 
   /**
+   * プロバイダの検証（モック実装）
+   */
+  validateProvider(type: string, endpoint?: string, apiKey?: string): boolean {
+    console.log(`Validating provider of type '${type}' with endpoint '${endpoint}' and apiKey '${apiKey ? '***' : ''}'`);
+    // 常に成功を返すモック実装
+    return true;
+  }
+
+  /**
    * データベースのレコードをProviderオブジェクトに変換
    */
   private mapRowToProvider(row: any): Provider {
@@ -235,6 +252,8 @@ export class ProvidersRepository {
       id: row.id,
       name: row.name,
       type: row.type as ProviderType,
+      endpoint: row.endpoint,
+      apiKey: row.api_key,
       isActive: Boolean(row.is_active),
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
