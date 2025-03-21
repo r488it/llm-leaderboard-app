@@ -8,6 +8,7 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import StorageIcon from '@mui/icons-material/Storage';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
 
@@ -74,6 +75,16 @@ const Layout: React.FC = () => {
             <AssessmentIcon color={isActive('/metrics') ? 'primary' : undefined} />
           </ListItemIcon>
           <ListItemText primary="評価" />
+        </ListItem>
+        <ListItem 
+          button 
+          onClick={() => handleNavigation('/inferences')}
+          selected={isActive('/inferences')}
+        >
+          <ListItemIcon>
+            <PsychologyIcon color={isActive('/inferences') ? 'primary' : undefined} />
+          </ListItemIcon>
+          <ListItemText primary="推論" />
         </ListItem>
         <ListItem 
           button 
