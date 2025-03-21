@@ -14,13 +14,17 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import StorageIcon from '@mui/icons-material/Storage';
+import HttpIcon from '@mui/icons-material/Http';
+import KeyIcon from '@mui/icons-material/Key';
 import { Model } from '../../types/provider';
+import { useProvider } from '../../hooks/useProviders';
 
 interface ModelCardProps {
   model: Model;
   onSelect?: (model: Model) => void;
   onEdit?: (model: Model) => void;
-  onDelete?: (modelId: string) => void;
+  onDelete?: (model: Model) => void;
 }
 
 /**
@@ -32,6 +36,9 @@ const ModelCard: React.FC<ModelCardProps> = ({
   onEdit, 
   onDelete 
 }) => {
+  // プロバイダ情報を取得
+  const { data: provider } = useProvider(model.providerId);
+
   const handleClick = () => {
     if (onSelect) {
       onSelect(model);
@@ -48,9 +55,18 @@ const ModelCard: React.FC<ModelCardProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete && confirm('このモデルを削除してもよろしいですか？')) {
-      onDelete(model.id);
+      onDelete(model);
     }
   };
+
+  // エンドポイントとAPIキーの表示用に加工
+  const truncatedEndpoint = model.endpoint ? 
+    model.endpoint.length > 30 ? 
+      model.endpoint.substring(0, 27) + '...' : 
+      model.endpoint : 
+    '未設定';
+  
+  const hasApiKey = model.apiKey && model.apiKey.length > 0;
 
   return (
     <Card 
@@ -93,9 +109,32 @@ const ModelCard: React.FC<ModelCardProps> = ({
           </Stack>
         </Box>
         
-        <Typography variant="body2" color="text.secondary" mb={2} noWrap>
+        <Typography variant="body2" color="text.secondary" mb={1} noWrap>
           {model.name}
         </Typography>
+
+        {provider && (
+          <Box display="flex" alignItems="center" mb={1}>
+            <StorageIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', fontSize: '0.875rem' }} />
+            <Typography variant="body2" color="text.secondary">
+              {provider.name} ({provider.type})
+            </Typography>
+          </Box>
+        )}
+
+        <Box display="flex" alignItems="center" mb={1}>
+          <HttpIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', fontSize: '0.875rem' }} />
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {truncatedEndpoint}
+          </Typography>
+        </Box>
+
+        <Box display="flex" alignItems="center" mb={2}>
+          <KeyIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', fontSize: '0.875rem' }} />
+          <Typography variant="body2" color="text.secondary">
+            {hasApiKey ? '******' : '未設定'}
+          </Typography>
+        </Box>
         
         <Box display="flex" flexWrap="wrap" gap={1} mt={2}>
           <Chip 
@@ -105,14 +144,21 @@ const ModelCard: React.FC<ModelCardProps> = ({
             variant="outlined"
           />
           
-          {model.parameters && Object.entries(model.parameters).map(([key, value]) => (
-            <Chip 
-              key={key}
-              label={`${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`}
-              size="small"
-              variant="outlined"
-            />
-          ))}
+          {model.parameters && Object.keys(model.parameters).length > 0 && (
+            <Tooltip title={
+              <div>
+                {Object.entries(model.parameters).map(([key, value]) => (
+                  <div key={key}>{`${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`}</div>
+                ))}
+              </div>
+            }>
+              <Chip 
+                label={`${Object.keys(model.parameters).length}個のパラメータ`}
+                size="small"
+                variant="outlined"
+              />
+            </Tooltip>
+          )}
         </Box>
       </CardContent>
     </Card>

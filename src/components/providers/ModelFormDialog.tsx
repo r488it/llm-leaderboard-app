@@ -14,9 +14,11 @@ import {
   Switch,
   FormControlLabel,
   Grid,
-  CircularProgress
+  CircularProgress,
+  SelectChangeEvent
 } from '@mui/material';
-import { ModelFormData } from '../../types/provider';
+import { ModelFormData, Provider } from '../../types/provider';
+import { useProviders } from '../../hooks/useProviders';
 
 interface ModelFormDialogProps {
   open: boolean;
@@ -24,7 +26,6 @@ interface ModelFormDialogProps {
   onSubmit: (data: ModelFormData) => void;
   initialData?: ModelFormData;
   isSubmitting: boolean;
-  providerId: string;
 }
 
 /**
@@ -35,17 +36,22 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
   onClose,
   onSubmit,
   initialData,
-  isSubmitting,
-  providerId
+  isSubmitting
 }) => {
   // デフォルト値の設定
   const defaultData: ModelFormData = {
+    providerId: '',
     name: '',
     displayName: '',
     description: '',
+    endpoint: '',
+    apiKey: '',
     parameters: {},
     isActive: true
   };
+
+  // プロバイダデータの取得
+  const { data: providers, isLoading: isLoadingProviders } = useProviders();
 
   // フォームの状態
   const [formData, setFormData] = useState<ModelFormData>(initialData || defaultData);
@@ -96,6 +102,24 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
     }));
   };
 
+  // プロバイダの変更処理
+  const handleProviderChange = (e: SelectChangeEvent<string>) => {
+    const providerId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      providerId
+    }));
+    
+    // エラーをクリア
+    if (errors.providerId) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.providerId;
+        return newErrors;
+      });
+    }
+  };
+
   // パラメータの変更処理
   const handleParametersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setParametersString(e.target.value);
@@ -114,12 +138,24 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     
+    if (!formData.providerId) {
+      newErrors.providerId = 'プロバイダは必須です';
+    }
+    
     if (!formData.name.trim()) {
-      newErrors.name = '名前は必須です';
+      newErrors.name = 'モデル名は必須です';
     }
     
     if (!formData.displayName.trim()) {
       newErrors.displayName = '表示名は必須です';
+    }
+    
+    if (!formData.endpoint.trim()) {
+      newErrors.endpoint = 'エンドポイントは必須です';
+    }
+    
+    if (!formData.apiKey.trim()) {
+      newErrors.apiKey = 'APIキーは必須です';
     }
     
     // パラメータのJSONバリデーション
@@ -155,6 +191,11 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
     }
   };
 
+  // 選択されたプロバイダの取得
+  const selectedProvider = formData.providerId ? 
+    providers?.find(p => p.id === formData.providerId) : 
+    undefined;
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -162,6 +203,26 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <FormControl fullWidth required error={!!errors.providerId}>
+              <InputLabel>プロバイダ</InputLabel>
+              <Select
+                name="providerId"
+                value={formData.providerId}
+                onChange={handleProviderChange}
+                label="プロバイダ"
+                disabled={isLoadingProviders}
+              >
+                {providers?.map((provider) => (
+                  <MenuItem key={provider.id} value={provider.id}>
+                    {provider.name} ({provider.type})
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.providerId && <FormHelperText>{errors.providerId}</FormHelperText>}
+            </FormControl>
+          </Grid>
+          
           <Grid item xs={12}>
             <TextField
               name="name"
@@ -184,6 +245,33 @@ const ModelFormDialog: React.FC<ModelFormDialogProps> = ({
               onChange={handleChange}
               error={!!errors.displayName}
               helperText={errors.displayName || 'UIに表示される名前（例: GPT-4, Llama 2）'}
+              required
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <TextField
+              name="endpoint"
+              label="エンドポイント"
+              fullWidth
+              value={formData.endpoint}
+              onChange={handleChange}
+              error={!!errors.endpoint}
+              helperText={errors.endpoint || 'モデルのエンドポイントURL'}
+              required
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <TextField
+              name="apiKey"
+              label="APIキー"
+              fullWidth
+              type="password"
+              value={formData.apiKey}
+              onChange={handleChange}
+              error={!!errors.apiKey}
+              helperText={errors.apiKey || 'モデルのAPIキー'}
               required
             />
           </Grid>

@@ -3,7 +3,7 @@ import { providersApi } from '../api/providers';
 import { Provider, ProviderFormData, Model, ModelFormData } from '../types/provider';
 
 /**
- * LLMプロバイダ関連のカスタムフック
+ * LLMプロバイダとモデル関連のカスタムフック
  */
 
 // プロバイダ一覧を取得するフック
@@ -59,7 +59,26 @@ export const useDeleteProvider = () => {
     onSuccess: () => {
       // 成功時にプロバイダ一覧を再取得
       queryClient.invalidateQueries({ queryKey: ['providers'] });
+      // モデル一覧も再取得
+      queryClient.invalidateQueries({ queryKey: ['models'] });
     },
+  });
+};
+
+// モデル一覧を取得するフック
+export const useModels = () => {
+  return useQuery<Model[], Error>({
+    queryKey: ['models'],
+    queryFn: () => providersApi.getAllModels(),
+  });
+};
+
+// 特定のモデルを取得するフック
+export const useModel = (id: string) => {
+  return useQuery<Model, Error>({
+    queryKey: ['models', id],
+    queryFn: () => providersApi.getModel(id),
+    enabled: !!id,
   });
 };
 
@@ -73,54 +92,46 @@ export const useProviderModels = (providerId: string) => {
 };
 
 // モデルを作成するフック
-export const useCreateModel = (providerId: string) => {
+export const useCreateModel = () => {
   const queryClient = useQueryClient();
   
   return useMutation<Model, Error, ModelFormData>({
-    mutationFn: (data) => providersApi.createModel(providerId, data),
-    onSuccess: () => {
+    mutationFn: (data) => providersApi.createModel(data),
+    onSuccess: (data) => {
       // 成功時にモデル一覧を再取得
-      queryClient.invalidateQueries({ queryKey: ['providers', providerId, 'models'] });
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+      // プロバイダのモデル一覧も再取得
+      queryClient.invalidateQueries({ queryKey: ['providers', data.providerId, 'models'] });
     },
   });
 };
 
 // モデルを更新するフック
-export const useUpdateModel = (providerId: string, modelId: string) => {
+export const useUpdateModel = (modelId: string) => {
   const queryClient = useQueryClient();
   
   return useMutation<Model, Error, ModelFormData>({
-    mutationFn: (data) => providersApi.updateModel(providerId, modelId, data),
-    onSuccess: () => {
+    mutationFn: (data) => providersApi.updateModel(modelId, data),
+    onSuccess: (data) => {
       // 成功時にモデル一覧を再取得
-      queryClient.invalidateQueries({ queryKey: ['providers', providerId, 'models'] });
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+      // プロバイダのモデル一覧も再取得
+      queryClient.invalidateQueries({ queryKey: ['providers', data.providerId, 'models'] });
     },
   });
 };
 
 // モデルを削除するフック
-export const useDeleteModel = (providerId: string) => {
+export const useDeleteModel = () => {
   const queryClient = useQueryClient();
   
-  return useMutation<void, Error, string>({
-    mutationFn: (modelId) => providersApi.deleteModel(providerId, modelId),
-    onSuccess: () => {
+  return useMutation<void, Error, {modelId: string, providerId: string}>({
+    mutationFn: ({modelId}) => providersApi.deleteModel(modelId),
+    onSuccess: (_, variables) => {
       // 成功時にモデル一覧を再取得
-      queryClient.invalidateQueries({ queryKey: ['providers', providerId, 'models'] });
+      queryClient.invalidateQueries({ queryKey: ['models'] });
+      // プロバイダのモデル一覧も再取得
+      queryClient.invalidateQueries({ queryKey: ['providers', variables.providerId, 'models'] });
     },
   });
-};
-
-// プロバイダを検証するフック
-export const useValidateProvider = () => {
-  return {
-    validateAzure: (endpoint: string, apiKey: string) => 
-      providersApi.validateAzureProvider(endpoint, apiKey),
-    validateOpenAI: (apiKey: string) => 
-      providersApi.validateOpenAIProvider(apiKey),
-    validateOllama: (endpoint: string) => 
-      providersApi.validateOllamaProvider(endpoint),
-    validateHuggingFace: (apiKey: string) => 
-      providersApi.validateHuggingFaceProvider(apiKey),
-  };
 };

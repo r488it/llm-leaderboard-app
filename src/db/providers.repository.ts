@@ -14,26 +14,12 @@ export class ProvidersRepository {
    */
   getProviders(): Provider[] {
     const rows = this.db.prepare(`
-      SELECT id, name, type, endpoint, api_key, is_active, created_at, updated_at
+      SELECT id, name, type, is_active, created_at, updated_at
       FROM providers
       ORDER BY created_at DESC
     `).all();
 
-    // 各プロバイダにモデル数を含める
-    return rows.map(row => {
-      const provider = this.mapRowToProvider(row);
-      
-      // モデル数を取得
-      const modelCount = this.db.prepare(`
-        SELECT COUNT(*) as count FROM models WHERE provider_id = ?
-      `).get(row.id);
-      
-      // モデル数を含める
-      return {
-        ...provider,
-        modelCount: modelCount ? modelCount.count : 0
-      };
-    });
+    return rows.map(row => this.mapRowToProvider(row));
   }
 
   /**
@@ -41,20 +27,14 @@ export class ProvidersRepository {
    */
   getProvider(id: string): Provider | null {
     const row = this.db.prepare(`
-      SELECT id, name, type, endpoint, api_key, is_active, created_at, updated_at
+      SELECT id, name, type, is_active, created_at, updated_at
       FROM providers
       WHERE id = ?
     `).get(id);
 
     if (!row) return null;
-
-    // プロバイダのモデルも取得
-    const models = this.getProviderModels(id);
     
-    return {
-      ...this.mapRowToProvider(row),
-      models
-    };
+    return this.mapRowToProvider(row);
   }
 
   /**
@@ -65,14 +45,12 @@ export class ProvidersRepository {
     const now = new Date().toISOString();
 
     this.db.prepare(`
-      INSERT INTO providers (id, name, type, endpoint, api_key, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO providers (id, name, type, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).run(
       id,
       data.name,
       data.type,
-      data.endpoint || null,
-      data.apiKey || null,
       data.isActive ? 1 : 0,
       now,
       now
@@ -82,10 +60,7 @@ export class ProvidersRepository {
       id,
       name: data.name,
       type: data.type as ProviderType,
-      endpoint: data.endpoint,
-      apiKey: data.apiKey,
       isActive: data.isActive,
-      models: [],
       createdAt: new Date(now),
       updatedAt: new Date(now)
     };
@@ -102,13 +77,11 @@ export class ProvidersRepository {
 
     this.db.prepare(`
       UPDATE providers
-      SET name = ?, type = ?, endpoint = ?, api_key = ?, is_active = ?, updated_at = ?
+      SET name = ?, type = ?, is_active = ?, updated_at = ?
       WHERE id = ?
     `).run(
       data.name,
       data.type,
-      data.endpoint || null,
-      data.apiKey || null,
       data.isActive ? 1 : 0,
       now,
       id
@@ -118,8 +91,6 @@ export class ProvidersRepository {
       ...provider,
       name: data.name,
       type: data.type as ProviderType,
-      endpoint: data.endpoint,
-      apiKey: data.apiKey,
       isActive: data.isActive,
       updatedAt: new Date(now)
     };
@@ -141,7 +112,7 @@ export class ProvidersRepository {
    */
   getProviderModels(providerId: string): Model[] {
     const rows = this.db.prepare(`
-      SELECT id, provider_id, name, display_name, description, parameters, is_active
+      SELECT id, provider_id, name, display_name, description, endpoint, api_key, parameters, is_active, created_at, updated_at
       FROM models
       WHERE provider_id = ?
       ORDER BY created_at DESC
@@ -155,7 +126,7 @@ export class ProvidersRepository {
    */
   getModel(modelId: string): Model | null {
     const row = this.db.prepare(`
-      SELECT id, provider_id, name, display_name, description, parameters, is_active
+      SELECT id, provider_id, name, display_name, description, endpoint, api_key, parameters, is_active, created_at, updated_at
       FROM models
       WHERE id = ?
     `).get(modelId);
@@ -167,20 +138,22 @@ export class ProvidersRepository {
   /**
    * モデルを作成
    */
-  createModel(providerId: string, data: ModelFormData): Model {
+  createModel(data: ModelFormData): Model {
     const id = uuidv4();
     const now = new Date().toISOString();
     const parameters = data.parameters ? JSON.stringify(data.parameters) : null;
 
     this.db.prepare(`
-      INSERT INTO models (id, provider_id, name, display_name, description, parameters, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO models (id, provider_id, name, display_name, description, endpoint, api_key, parameters, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
-      providerId,
+      data.providerId,
       data.name,
       data.displayName,
       data.description || null,
+      data.endpoint || null,
+      data.apiKey || null,
       parameters,
       data.isActive ? 1 : 0,
       now,
@@ -189,19 +162,23 @@ export class ProvidersRepository {
 
     return {
       id,
-      providerId,
+      providerId: data.providerId,
       name: data.name,
       displayName: data.displayName,
       description: data.description,
+      endpoint: data.endpoint,
+      apiKey: data.apiKey,
       parameters: data.parameters,
-      isActive: data.isActive
+      isActive: data.isActive,
+      createdAt: new Date(now),
+      updatedAt: new Date(now)
     };
   }
 
   /**
    * モデルを更新
    */
-  updateModel(providerId: string, modelId: string, data: ModelFormData): Model | null {
+  updateModel(modelId: string, data: ModelFormData): Model | null {
     const model = this.getModel(modelId);
     if (!model) return null;
 
@@ -210,36 +187,42 @@ export class ProvidersRepository {
 
     this.db.prepare(`
       UPDATE models
-      SET name = ?, display_name = ?, description = ?, parameters = ?, is_active = ?, updated_at = ?
-      WHERE id = ? AND provider_id = ?
+      SET provider_id = ?, name = ?, display_name = ?, description = ?, endpoint = ?, api_key = ?, parameters = ?, is_active = ?, updated_at = ?
+      WHERE id = ?
     `).run(
+      data.providerId,
       data.name,
       data.displayName,
       data.description || null,
+      data.endpoint || null,
+      data.apiKey || null,
       parameters,
       data.isActive ? 1 : 0,
       now,
-      modelId,
-      providerId
+      modelId
     );
 
     return {
       ...model,
+      providerId: data.providerId,
       name: data.name,
       displayName: data.displayName,
       description: data.description,
+      endpoint: data.endpoint,
+      apiKey: data.apiKey,
       parameters: data.parameters,
-      isActive: data.isActive
+      isActive: data.isActive,
+      updatedAt: new Date(now)
     };
   }
 
   /**
    * モデルを削除
    */
-  deleteModel(providerId: string, modelId: string): boolean {
+  deleteModel(modelId: string): boolean {
     const result = this.db.prepare(`
-      DELETE FROM models WHERE id = ? AND provider_id = ?
-    `).run(modelId, providerId);
+      DELETE FROM models WHERE id = ?
+    `).run(modelId);
 
     return result.changes > 0;
   }
@@ -252,10 +235,7 @@ export class ProvidersRepository {
       id: row.id,
       name: row.name,
       type: row.type as ProviderType,
-      endpoint: row.endpoint,
-      apiKey: row.api_key,
       isActive: Boolean(row.is_active),
-      models: [],
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };
@@ -271,17 +251,13 @@ export class ProvidersRepository {
       name: row.name,
       displayName: row.display_name,
       description: row.description,
+      endpoint: row.endpoint,
+      apiKey: row.api_key,
       parameters: row.parameters ? JSON.parse(row.parameters) : undefined,
-      isActive: Boolean(row.is_active)
+      isActive: Boolean(row.is_active),
+      createdAt: row.created_at ? new Date(row.created_at) : undefined,
+      updatedAt: row.updated_at ? new Date(row.updated_at) : undefined
     };
-  }
-
-  /**
-   * プロバイダの接続を検証（モックとして常に成功を返す）
-   */
-  validateProvider(type: string, endpoint?: string, apiKey?: string): boolean {
-    // 実際の実装では、APIへの接続テストを行う
-    return true;
   }
 }
 

@@ -81,6 +81,24 @@ app.delete('/api/providers/:id', (req, res) => {
   }
 });
 
+// 全モデル一覧を取得
+app.get('/api/models', (req, res) => {
+  try {
+    const allModels = [];
+    const providers = providersRepository.getProviders();
+    
+    for (const provider of providers) {
+      const models = providersRepository.getProviderModels(provider.id);
+      allModels.push(...models);
+    }
+    
+    res.json(allModels);
+  } catch (error) {
+    console.error('Error fetching all models:', error);
+    res.status(500).json({ error: 'Failed to fetch models' });
+  }
+});
+
 // プロバイダのモデル一覧を取得
 app.get('/api/providers/:id/models', (req, res) => {
   try {
@@ -92,21 +110,35 @@ app.get('/api/providers/:id/models', (req, res) => {
   }
 });
 
-// モデルを作成
-app.post('/api/providers/:id/models', (req, res) => {
+// 特定のモデルを取得
+app.get('/api/models/:id', (req, res) => {
   try {
-    const model = providersRepository.createModel(req.params.id, req.body);
+    const model = providersRepository.getModel(req.params.id);
+    if (!model) {
+      return res.status(404).json({ error: 'Model not found' });
+    }
+    res.json(model);
+  } catch (error) {
+    console.error(`Error fetching model ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Failed to fetch model' });
+  }
+});
+
+// モデルを作成
+app.post('/api/models', (req, res) => {
+  try {
+    const model = providersRepository.createModel(req.body);
     res.status(201).json(model);
   } catch (error) {
-    console.error(`Error creating model for provider ${req.params.id}:`, error);
+    console.error('Error creating model:', error);
     res.status(500).json({ error: 'Failed to create model' });
   }
 });
 
 // モデルを更新
-app.put('/api/providers/:providerId/models/:modelId', (req, res) => {
+app.put('/api/models/:modelId', (req, res) => {
   try {
-    const model = providersRepository.updateModel(req.params.providerId, req.params.modelId, req.body);
+    const model = providersRepository.updateModel(req.params.modelId, req.body);
     if (!model) {
       return res.status(404).json({ error: 'Model not found' });
     }
@@ -118,9 +150,9 @@ app.put('/api/providers/:providerId/models/:modelId', (req, res) => {
 });
 
 // モデルを削除
-app.delete('/api/providers/:providerId/models/:modelId', (req, res) => {
+app.delete('/api/models/:modelId', (req, res) => {
   try {
-    const success = providersRepository.deleteModel(req.params.providerId, req.params.modelId);
+    const success = providersRepository.deleteModel(req.params.modelId);
     if (!success) {
       return res.status(404).json({ error: 'Model not found' });
     }

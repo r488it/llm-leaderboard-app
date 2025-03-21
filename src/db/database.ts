@@ -46,8 +46,6 @@ class DatabaseManager {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         type TEXT NOT NULL,
-        endpoint TEXT,
-        api_key TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -62,6 +60,8 @@ class DatabaseManager {
         name TEXT NOT NULL,
         display_name TEXT NOT NULL,
         description TEXT,
+        endpoint TEXT,
+        api_key TEXT,
         parameters TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,

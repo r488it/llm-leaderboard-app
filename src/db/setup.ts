@@ -3,6 +3,7 @@ import { providersRepository } from './providers.repository';
 import { datasetsRepository } from './datasets.repository';
 import { inferencesRepository } from './inferences.repository';
 import { metricsRepository } from './metrics.repository';
+import { ModelFormData } from '../types/provider';
 
 /**
  * アプリケーションの初期データを設定するクラス
@@ -43,7 +44,6 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'OpenAI',
         type: 'openai',
-        apiKey: 'sk-sample-key-openai',
         isActive: true
       });
       console.log(`Created OpenAI provider: ${provider.id}`);
@@ -60,8 +60,6 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'Azure OpenAI',
         type: 'azure',
-        endpoint: 'https://example-azure-openai.openai.azure.com',
-        apiKey: 'azure-sample-key',
         isActive: true
       });
       console.log(`Created Azure provider: ${provider.id}`);
@@ -78,7 +76,6 @@ class DatabaseSetup {
       const provider = providersRepository.createProvider({
         name: 'Ollama',
         type: 'ollama',
-        endpoint: 'http://localhost:11434',
         isActive: true
       });
       console.log(`Created Ollama provider: ${provider.id}`);
@@ -92,19 +89,28 @@ class DatabaseSetup {
   // OpenAIモデルの作成
   createOpenAIModels(providerId: string) {
     try {
-      const gpt4 = providersRepository.createModel(providerId, {
+      const gpt4ModelData: ModelFormData = {
+        providerId: providerId,
         name: 'gpt-4',
         displayName: 'GPT-4',
         description: 'OpenAI GPT-4 model',
+        endpoint: 'https://api.openai.com/v1',
+        apiKey: 'sk-sample-key-openai',
         isActive: true
-      });
+      };
       
-      const gpt35Turbo = providersRepository.createModel(providerId, {
+      const gpt35TurboModelData: ModelFormData = {
+        providerId: providerId,
         name: 'gpt-3.5-turbo',
         displayName: 'GPT-3.5 Turbo',
         description: 'OpenAI GPT-3.5 Turbo model',
+        endpoint: 'https://api.openai.com/v1',
+        apiKey: 'sk-sample-key-openai',
         isActive: true
-      });
+      };
+      
+      const gpt4 = providersRepository.createModel(gpt4ModelData);
+      const gpt35Turbo = providersRepository.createModel(gpt35TurboModelData);
       
       console.log(`Created OpenAI models: ${gpt4.id}, ${gpt35Turbo.id}`);
     } catch (error) {
@@ -116,12 +122,17 @@ class DatabaseSetup {
   // Azureモデルの作成
   createAzureModels(providerId: string) {
     try {
-      const gpt4 = providersRepository.createModel(providerId, {
+      const gpt4ModelData: ModelFormData = {
+        providerId: providerId,
         name: 'gpt-4',
         displayName: 'Azure GPT-4',
         description: 'Azure-hosted GPT-4 model',
+        endpoint: 'https://example-azure-openai.openai.azure.com',
+        apiKey: 'azure-sample-key',
         isActive: true
-      });
+      };
+      
+      const gpt4 = providersRepository.createModel(gpt4ModelData);
       
       console.log(`Created Azure model: ${gpt4.id}`);
     } catch (error) {
@@ -133,19 +144,28 @@ class DatabaseSetup {
   // Ollamaモデルの作成
   createOllamaModels(providerId: string) {
     try {
-      const llama2 = providersRepository.createModel(providerId, {
+      const llama2ModelData: ModelFormData = {
+        providerId: providerId,
         name: 'llama2',
         displayName: 'Llama 2',
         description: 'Meta\'s Llama 2 model',
+        endpoint: 'http://localhost:11434/api/generate',
+        apiKey: '',
         isActive: true
-      });
+      };
       
-      const mistral = providersRepository.createModel(providerId, {
+      const mistralModelData: ModelFormData = {
+        providerId: providerId,
         name: 'mistral',
         displayName: 'Mistral 7B',
         description: 'Mistral 7B model',
+        endpoint: 'http://localhost:11434/api/generate',
+        apiKey: '',
         isActive: true
-      });
+      };
+      
+      const llama2 = providersRepository.createModel(llama2ModelData);
+      const mistral = providersRepository.createModel(mistralModelData);
       
       console.log(`Created Ollama models: ${llama2.id}, ${mistral.id}`);
     } catch (error) {
