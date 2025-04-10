@@ -30,7 +30,7 @@ A web application for tracking, comparing, and visualizing language model perfor
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/llm-leaderboard-app.git
+git clone https://github.com/r488it/llm-leaderboard-app.git
 cd llm-leaderboard-app
 ```
 
@@ -56,7 +56,7 @@ To start the development server:
 npm run dev
 ```
 
-This will start the development server at `http://localhost:5173` (default Vite port).
+This will start the development server at `http://localhost:3000` (default Vite port).
 
 ### Building for Production
 
